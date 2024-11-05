@@ -1,0 +1,18 @@
+
+
+.mainDiv{
+    display:flex;
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 10px;
+}
+.homeDiv{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.homeDiv1{
+    width:50%;
+}

@@ -88,7 +88,7 @@ const LocationScreenComponent = () => {
     <>
       <div
         className="w-full md:w-1/2 h-64 md:h-auto"
-        style={{ minHeight: "50vh" }}
+        style={{ minHeight: "50vh" , minWidth:"100vw"}}
       >
         <GoogleMap
           key={mapKey}
