@@ -20,7 +20,6 @@ const LocationScreenComponent = () => {
 
   const location = useLocation();
   const { address } = location.state || {};
-  console.log(address)
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: "AIzaSyBqHp7o26HqfYZuuUnuGheylzUaNQZvRzQ",
@@ -32,27 +31,6 @@ const LocationScreenComponent = () => {
       fetchLocation();
     }
   }, [address, isLoaded]);
-
-  const getUserLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(getCoordinates, (error) => {
-        console.error("Error getting the location:", error);
-      });
-    } else {
-      alert("Geolocation is not supported by this browser.");
-    }
-  };
-
-  const getCoordinates = (position) => {
-    const userLocation = {
-      lat: position.coords.latitude,
-      lng: position.coords.longitude,
-    };
-    setCurrentLocation(userLocation);
-    map.panTo(userLocation);
-    setZoom(20);
-    map.setZoom(20);
-  };
 
   const fetchLocation = async () => {
     if (!address?.fromAddress || !address?.destinationAddress) {
@@ -86,10 +64,7 @@ const LocationScreenComponent = () => {
 
   return (
     <>
-      <div
-        className="w-full md:w-1/2 h-64 md:h-auto"
-        style={{ minHeight: "50vh" , minWidth:"100vw"}}
-      >
+      <div className="map-container w-full h-[50vh] md:h-[80vh] md:w-full">
         <GoogleMap
           key={mapKey}
           center={currentLocation || { lat: 17.3841, lng: 78.4564 }}

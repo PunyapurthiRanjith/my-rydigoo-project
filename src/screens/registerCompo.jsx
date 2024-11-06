@@ -1,6 +1,8 @@
-import axios from "axios";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { auth, db } from "../firebase";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 
 const RegisterScreenComponent = () => {
   const [username, setUsername] = useState("");
@@ -10,7 +12,7 @@ const RegisterScreenComponent = () => {
   const [checkbox, setCheckbox] = useState(false);
 
   const [userSpan, setUserSpan] = useState("");
-  const [emailSpan, setEMailSpan] = useState("");
+  const [emailSpan, setEmailSpan] = useState("");
   const [mobileSpan, setMobileSpan] = useState("");
   const [passwordSpan, setPasswordSpan] = useState("");
   const [checkboxSpan, setCheckboxSpan] = useState("");
@@ -19,39 +21,82 @@ const RegisterScreenComponent = () => {
     color: "red",
   };
 
+  const navigate= useNavigate()
+
+  const navigateToLogIn=()=>{
+    navigate("/login-page")
+  }
+
   const usernameHandler = (event) => {
     const usernameEntered = event.target.value;
     setUsername(usernameEntered);
-    const finalUserError = usernameValidation(usernameEntered);
-    setUserSpan(finalUserError);
+    setUserSpan(usernameValidation(usernameEntered));
   };
 
   const emailHandler = (event) => {
     const emailEntered = event.target.value;
     setEmail(emailEntered);
-    const finalEmailError = emailValidation(emailEntered);
-    setEMailSpan(finalEmailError);
+    setEmailSpan(emailValidation(emailEntered));
   };
 
   const mobileHandler = (event) => {
     const mobileEntered = event.target.value;
     setMobile(mobileEntered);
-    const finalMobileError = mobileValidation(mobileEntered);
-    setMobileSpan(finalMobileError);
+    setMobileSpan(mobileValidation(mobileEntered));
   };
 
   const passwordHandler = (event) => {
     const passwordEntered = event.target.value;
     setPassword(passwordEntered);
-    const finalPasswordError = passwordValidation(passwordEntered);
-    setPasswordSpan(finalPasswordError);
+    setPasswordSpan(passwordValidation(passwordEntered));
   };
 
   const checkboxHandler = (event) => {
     const isChecked = event.target.checked;
     setCheckbox(isChecked);
-    const finalCheckboxError = checkboxValidation(isChecked);
-    setCheckboxSpan(finalCheckboxError);
+    setCheckboxSpan(checkboxValidation(isChecked));
+  };
+
+  const submitHandler = async (event) => {
+    event.preventDefault();
+
+    if (!username || !mobile || !email || !password || !checkbox) {
+      alert("Please fill out all the fields");
+      return;
+    }
+
+    if (userSpan || emailSpan || mobileSpan || passwordSpan || checkboxSpan) {
+      alert("Please enter valid information in all fields");
+      return;
+    }
+
+    try {
+      // Create user with Firebase Authentication
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
+
+      // Store additional user details in Firestore
+      await setDoc(doc(db, "users", user.uid), {
+        username,
+        mobile,
+        email,
+        createdAt: new Date(),
+      });
+
+      // Clear the form
+      setUsername("");
+      setEmail("");
+      setMobile("");
+      setPassword("");
+      setCheckbox(false);
+      alert("Registration successful!");
+    } catch (error) {
+      alert("Error creating user:");
+    }
   };
 
   const usernameValidation = (userErrorChecker) => {
@@ -72,95 +117,37 @@ const RegisterScreenComponent = () => {
   };
 
   const emailValidation = (emailErrorChecker) => {
-    let finalEmailError = "";
     const emailRegex = /^[^\s@]+@gmail\.com$/;
-
-    if (emailErrorChecker === "") {
-      finalEmailError = "Please enter an email ID";
-    } else if (!emailRegex.test(emailErrorChecker)) {
-      finalEmailError = "Email must end with '@gmail.com'";
-    }
-    return finalEmailError;
+    return emailErrorChecker === ""
+      ? "Please enter an email ID"
+      : !emailRegex.test(emailErrorChecker)
+      ? "Email must end with '@gmail.com'"
+      : "";
   };
 
   const mobileValidation = (mobileErrorChecker) => {
     const mobileRegex = /^[6-9][0-9]{9}$/;
-    let finalMobileError = "";
-    if (mobileErrorChecker === "") {
-      finalMobileError = "Please enter the mobile number";
-    } else if (!mobileRegex.test(mobileErrorChecker)) {
-      finalMobileError = "Please enter a valid mobile number";
-    }
-    return finalMobileError;
+    return mobileErrorChecker === ""
+      ? "Please enter the mobile number"
+      : !mobileRegex.test(mobileErrorChecker)
+      ? "Please enter a valid mobile number"
+      : "";
   };
 
   const passwordValidation = (passwordErrorChecker) => {
-    let finalPasswordError = "";
     const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(passwordErrorChecker);
     const hasNumber = /\d/.test(passwordErrorChecker);
-
-    if (passwordErrorChecker === "") {
-      finalPasswordError = "Please set your password";
-    } else if (!hasSpecialChar) {
-      finalPasswordError =
-        "Password must contain at least one special character";
-    } else if (!hasNumber) {
-      finalPasswordError = "Password must contain at least one numeric value";
-    }
-    return finalPasswordError;
+    return passwordErrorChecker === ""
+      ? "Please set your password"
+      : !hasSpecialChar
+      ? "Password must contain at least one special character"
+      : !hasNumber
+      ? "Password must contain at least one numeric value"
+      : "";
   };
 
   const checkboxValidation = (isChecked) => {
-    let finalCheckboxError = "";
-    if (!isChecked) {
-      finalCheckboxError = "You must agree to the terms and conditions";
-    }
-    return finalCheckboxError;
-  };
-
-  const submitHandler = async (event) => {
-    event.preventDefault();
-
-    if (!username || !mobile || !email || !password || checkbox === false) {
-      alert("Please fill out all the fields");
-      return;
-    }
-
-    if (userSpan || emailSpan || mobileSpan || passwordSpan || checkboxSpan) {
-      alert("Please enter the correct credentials");
-      return;
-    }
-
-    const formDataToSubmit = {
-      username,
-      mobile,
-      email,
-      password,
-    };
-
-    try {
-      const response = await axios.post(
-        "http://localhost:3000/formDetails",
-        formDataToSubmit,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (response.status !== 200) {
-        throw new Error("Failed to submit form data");
-      }
-      setFormData((prevData) => [...prevData, formDataToSubmit]);
-      setUsername("");
-      setEmail("");
-      setMobile("");
-      setPassword("");
-      setCheckbox(false);
-    } catch (error) {
-      console.error(error.message);
-    }
+    return isChecked ? "" : "You must agree to the terms and conditions";
   };
 
   return (
@@ -296,6 +283,7 @@ const RegisterScreenComponent = () => {
             <div>
               <button
                 type="submit"
+                onClick={submitHandler}
                 className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
               >
                 Sign in
@@ -305,12 +293,10 @@ const RegisterScreenComponent = () => {
 
           <p className="mt-10 text-center text-sm text-gray-500">
             already have an account?{" "}
-            <button
-              to="/login"
-              className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500"
-            >
-              Login here
-            </button>
+              <button onClick={navigateToLogIn}
+              className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500">
+                Login here
+              </button>
           </p>
         </div>
       </div>

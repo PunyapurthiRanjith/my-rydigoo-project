@@ -14,8 +14,8 @@ const NavigationStackComponent = () => {
           <Route path="/" element={<HomeScreenComponent />} />
           <Route path="/register-page" element={<RegisterScreenComponent />} />
           <Route path="/login-page" element={<LoginScreenComponent />} />
-          <Route path="/app-interface" element={<AppInterfaceComponent />} />
-          <Route path="/locationRoute-page" element={<LocationScreenComponent />}  />
+          <Route path="app-interface" element={<AppInterfaceComponent />} />
+          <Route path="locationRoute-page" element={<LocationScreenComponent />}  />
         </Routes>
       </BrowserRouter>
     </>

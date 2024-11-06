@@ -8,6 +8,7 @@ const AppInterfaceComponent = () => {
   const fromRef = useRef();
   const destinationRef = useRef();
   const [formErrors, setFormErrors] = useState({});
+  const[currentLocation,setCurrentLocation]=useState(null)
   const [address, setAddress] = useState({
     fromAddress: "",
     destinationAddress: "",
@@ -22,6 +23,27 @@ const AppInterfaceComponent = () => {
   if (!isLoaded) {
     return <div>Loading...</div>;
   }
+
+  const getUserLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(getCoordinates, (error) => {
+        console.error("Error getting the location:", error);
+      });
+    } else {
+      alert("Geolocation is not supported by this browser.");
+    }
+  };
+
+  const getCoordinates = (position) => {
+    const userLocation = {
+      lat: position.coords.latitude,
+      lng: position.coords.longitude,
+    };
+    setCurrentLocation(userLocation);
+    map.panTo(userLocation);
+    setZoom(20);
+    map.setZoom(20);
+  };
 
   const confirmRide = async (e) => {
     e.preventDefault();
