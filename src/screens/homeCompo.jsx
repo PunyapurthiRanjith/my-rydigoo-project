@@ -1,15 +1,10 @@
-"use client";
-
-
-
-import SubscribeComponent from "../components/subscribeCompo";
-import OurTeamComponent from "../components/ourTeamCompo";
 import HomeIntroComponent from "../components/homeIntroCompo";
-import MiddleComponent from "../components/middileSectionCompo";
 import ServicesComponent from "../components/servicesCompo";
+import MiddleComponent from "../components/middileSectionCompo";
+import OurTeamComponent from "../components/ourTeamCompo";
+import SubscribeComponent from "../components/subscribeCompo";
 
 const HomeScreenComponent = () => {
-  
   return (
     <>
       <HomeIntroComponent></HomeIntroComponent>

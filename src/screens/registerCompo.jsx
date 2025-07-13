@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
@@ -21,11 +21,11 @@ const RegisterScreenComponent = () => {
     color: "red",
   };
 
-  const navigate= useNavigate()
+  const navigate = useNavigate();
 
-  const navigateToLogIn=()=>{
-    navigate("/login-page")
-  }
+  const navigateToLogIn = () => {
+    navigate("/login-page");
+  };
 
   const usernameHandler = (event) => {
     const usernameEntered = event.target.value;
@@ -78,15 +78,17 @@ const RegisterScreenComponent = () => {
         password
       );
       const user = userCredential.user;
-
+      console.log(user);
       // Store additional user details in Firestore
-      await setDoc(doc(db, "users", user.uid), {
-        username,
-        mobile,
-        email,
-        createdAt: new Date(),
-      });
-
+      if (user) {
+        await setDoc(doc(db, "users", user.uid), {
+          username,
+          mobile,
+          email,
+          password,
+          createdAt: new Date(),
+        });
+      }
       // Clear the form
       setUsername("");
       setEmail("");
@@ -96,6 +98,7 @@ const RegisterScreenComponent = () => {
       alert("Registration successful!");
     } catch (error) {
       alert("Error creating user:");
+      console.log(error)
     }
   };
 
@@ -152,7 +155,7 @@ const RegisterScreenComponent = () => {
 
   return (
     <>
-      <div className="flex min-h-full flex-1 flex-col justify-center border">
+      <div className="bg-white flex min-h-full flex-1 flex-col justify-center border">
         <div className="sm:mx-auto sm:w-full  sm:max-w-sm">
           <img
             alt="Your Company"
@@ -293,10 +296,12 @@ const RegisterScreenComponent = () => {
 
           <p className="mt-10 text-center text-sm text-gray-500">
             already have an account?{" "}
-              <button onClick={navigateToLogIn}
-              className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500">
-                Login here
-              </button>
+            <button
+              onClick={navigateToLogIn}
+              className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500"
+            >
+              Login here
+            </button>
           </p>
         </div>
       </div>

@@ -58,6 +58,8 @@ const AppInterfaceComponent = () => {
     } else {
       const newAddress = { fromAddress: fromEntered, destinationAddress: destinationEntered };
       setAddress(newAddress);
+      // sending fromAddress and destination address to location component through useNavigate hook second argument
+      // we can able to pass the state through object like below
       navigate("/locationRoute-page", { state: { address: newAddress } });
     }
   };
@@ -85,7 +87,6 @@ const AppInterfaceComponent = () => {
           <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
             Let's start a Ride...
           </h2>
-
           <div className="mt-10">
             <form onSubmit={confirmRide} className="space-y-6">
               <div>
