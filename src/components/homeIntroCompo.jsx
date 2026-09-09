@@ -1,190 +1,164 @@
 import { motion } from "framer-motion";
 import homeImage from "../assets/homepage-image.jpg";
+import heroRide from "../assets/hero-ride.svg";
 import { useState } from "react";
 import { Dialog } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { Link } from "react-router-dom";
+import RydigooLogo from "./RydigooLogo";
 
 const HomeIntroComponent = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const contentVariants = {
-    hidden: { opacity: 0, y: -50 },
-    visible: { opacity: 1, y: 0 },
-  };
 
   const navigation = [
-    { name: "Product", href: "#" },
-    { name: "Features", href: "#" },
-    { name: "Marketplace", href: "#" },
-    { name: "Company", href: "#" },
+    { name: "Services", href: "#services" },
+    { name: "Features", href: "#features" },
+    { name: "Team", href: "#team" },
   ];
 
   return (
-    <>
-      <div className="bg-white">
-        {/* Header Section */}
-        <header className="absolute inset-x-0 top-0 z-50">
-          <nav
-            aria-label="Global"
-            className="flex items-center justify-between p-6 lg:px-8"
-          >
-            <div className="flex lg:flex-1">
-              <a href="#" className="-m-1.5 p-1.5">
-                <span className="sr-only">Your Company</span>
-                <img
-                  alt="Company logo"
-                  src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=600"
-                  className="h-8 w-auto"
-                />
-              </a>
-            </div>
-            <div className="flex lg:hidden">
-              <button
-                type="button"
-                onClick={() => setMobileMenuOpen(true)}
-                className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700"
+    <div className="relative overflow-hidden bg-gradient-to-br from-slate-50 via-teal-50/40 to-indigo-50/40">
+      <header className="absolute inset-x-0 top-0 z-50">
+        <nav className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8">
+          <Link to="/">
+            <RydigooLogo size="md" />
+          </Link>
+
+          <div className="flex lg:hidden">
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(true)}
+              className="-m-2.5 rounded-lg p-2.5 text-gray-700 hover:bg-white/60"
+            >
+              <Bars3Icon className="h-6 w-6" />
+            </button>
+          </div>
+
+          <div className="hidden lg:flex lg:gap-x-10">
+            {navigation.map((item) => (
+              <a
+                key={item.name}
+                href={item.href}
+                className="text-sm font-semibold text-gray-700 transition hover:text-teal-600"
               >
-                <span className="sr-only">Open main menu</span>
-                <Bars3Icon aria-hidden="true" className="h-6 w-6" />
+                {item.name}
+              </a>
+            ))}
+          </div>
+
+          <div className="hidden lg:flex lg:items-center lg:gap-4">
+            <Link to="/login-page" className="text-sm font-semibold text-gray-700 hover:text-teal-600">
+              Log in
+            </Link>
+            <Link to="/register-page" className="btn-primary">
+              Get Started
+            </Link>
+          </div>
+        </nav>
+
+        <Dialog open={mobileMenuOpen} onClose={setMobileMenuOpen} className="lg:hidden">
+          <div className="fixed inset-0 z-50 bg-black/20" />
+          <Dialog.Panel className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm">
+            <div className="flex items-center justify-between">
+              <RydigooLogo size="sm" />
+              <button type="button" onClick={() => setMobileMenuOpen(false)} className="p-2">
+                <XMarkIcon className="h-6 w-6" />
               </button>
             </div>
-            <div className="hidden lg:flex lg:gap-x-12">
+            <div className="mt-8 space-y-2">
               {navigation.map((item) => (
                 <a
                   key={item.name}
                   href={item.href}
-                  className="text-sm font-semibold leading-6 text-gray-900"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block rounded-lg px-3 py-2 text-base font-semibold text-gray-900 hover:bg-teal-50"
                 >
                   {item.name}
                 </a>
               ))}
-            </div>
-            <div className="hidden lg:flex lg:flex-1 lg:justify-end">
-              <a
-                href="#"
-                className="text-sm font-semibold leading-6 text-gray-900"
+              <Link
+                to="/login-page"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block rounded-lg px-3 py-2 text-base font-semibold text-gray-900 hover:bg-teal-50"
               >
-                Log in <span aria-hidden="true">&rarr;</span>
-              </a>
+                Log in
+              </Link>
             </div>
-          </nav>
+          </Dialog.Panel>
+        </Dialog>
+      </header>
 
-          {/* Mobile Menu */}
-          <Dialog
-            open={mobileMenuOpen}
-            onClose={setMobileMenuOpen}
-            className="lg:hidden"
-          >
-            <div className="fixed inset-0 z-50" />
-            <Dialog.Panel className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
-              <div className="flex items-center justify-between">
-                <a href="#" className="-m-1.5 p-1.5">
-                  <span className="sr-only">Your Company</span>
-                  <img
-                    alt="Company logo"
-                    src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=600"
-                    className="h-8 w-auto"
-                  />
-                </a>
-                <button
-                  type="button"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="-m-2.5 rounded-md p-2.5 text-gray-700"
-                >
-                  <span className="sr-only">Close menu</span>
-                  <XMarkIcon aria-hidden="true" className="h-6 w-6" />
-                </button>
-              </div>
-              <div className="mt-6 flow-root">
-                <div className="-my-6 divide-y divide-gray-500/10">
-                  <div className="space-y-2 py-6">
-                    {navigation.map((item) => (
-                      <a
-                        key={item.name}
-                        href={item.href}
-                        className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
-                      >
-                        {item.name}
-                      </a>
-                    ))}
-                  </div>
-                  <div className="py-6">
-                    <a
-                      href="#"
-                      className="-mx-3 block rounded-lg px-3 py-2.5 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
-                    >
-                      Log in
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </Dialog.Panel>
-          </Dialog>
-        </header>
+      <div className="relative mx-auto max-w-7xl px-6 pb-20 pt-28 lg:px-8 lg:pt-32">
+        <div
+          aria-hidden="true"
+          className="absolute -top-24 right-0 -z-10 h-96 w-96 rounded-full bg-teal-300/30 blur-3xl"
+        />
+        <div
+          aria-hidden="true"
+          className="absolute bottom-0 left-0 -z-10 h-80 w-80 rounded-full bg-indigo-300/30 blur-3xl"
+        />
 
-        {/* Main Content Section */}
-        <div className="relative isolate px-6 pt-14 lg:px-8">
-          <div
-            aria-hidden="true"
-            className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80"
-          >
-            <div
-              style={{
-                clipPath:
-                  "polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)",
-              }}
-              className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]"
-            />
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
+          className="grid items-center gap-12 lg:grid-cols-2"
+        >
+          <div>
+            <span className="inline-flex rounded-full bg-teal-100 px-4 py-1.5 text-sm font-semibold text-teal-800">
+              🚀 MVP Demo · No billing required
+            </span>
+            <h1 className="mt-6 text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
+              Ride anywhere with{" "}
+              <span className="bg-gradient-to-r from-teal-600 to-indigo-600 bg-clip-text text-transparent">
+                Rydigoo
+              </span>
+            </h1>
+            <p className="mt-6 text-lg leading-8 text-gray-600">
+              Book bike, auto, or cab rides in seconds. Live maps, transparent fare
+              breakdown, and instant booking — all running free on localhost.
+            </p>
+
+            <div className="mt-8 flex flex-wrap gap-4">
+              <Link to="/register-page" className="btn-primary px-6 py-3">
+                Register Free
+              </Link>
+              <Link to="/login-page" className="btn-secondary px-6 py-3">
+                Log in
+              </Link>
+            </div>
+
+            <div className="mt-10 grid grid-cols-3 gap-4 rounded-2xl bg-white/70 p-4 shadow-sm ring-1 ring-gray-100 backdrop-blur">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-teal-700">3</p>
+                <p className="text-xs text-gray-500">Ride types</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-indigo-700">₹40+</p>
+                <p className="text-xs text-gray-500">Starting fare</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-teal-700">5%</p>
+                <p className="text-xs text-gray-500">GST included</p>
+              </div>
+            </div>
           </div>
 
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={contentVariants}
-            transition={{ duration: 0.7 }}
-            className="flex flex-col lg:flex-row  "
-          >
-            <div className="mx-auto max-w-2xl py-16 sm:py-32 lg:py-48 flex-1">
-              <div className="text-center">
-                <h1 className="text-balance text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
-                  Data to enrich your online business
-                </h1>
-                <p className="mt-6 text-base sm:text-lg leading-7 sm:leading-8 text-gray-600">
-                  Anim aute id magna aliqua ad ad non deserunt sunt. Qui irure
-                  qui lorem cupidatat commodo. Elit sunt amet fugiat veniam
-                  occaecat fugiat aliqua.
-                </p>
-                <div className="mt-8 sm:mt-10 flex items-center justify-center gap-x-4 sm:gap-x-6">
-                  <Link to={"register-page"}>
-                    <button className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                      Register
-                    </button>
-                  </Link>
-                  <Link to={"login-page"}>
-                    <button className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                      Log in
-                    </button>
-                  </Link>
-                </div>
-              </div>
-            </div>
-            <div className="p-5 mx-auto max-w-2xl py-16 sm:py-32 lg:py-48 flex-1 px-20">
-              <img
-                src={homeImage}
-                alt="homeImage"
-                className="w-full max-w-md sm:max-w-lg lg:max-w-2xl xs:max-w-2xl"
-                style={{ borderRadius: "10px" }}
-              />
-            </div>
-          </motion.div>
-
-          <div
-            aria-hidden="true"
-            className="absolute inset-x-0 top-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[calc(100%-30rem)]"
-          />
-        </div>
+          <div className="relative">
+            <img
+              src={heroRide}
+              alt="Rydigoo ride illustration"
+              className="relative z-10 w-full max-w-lg rounded-3xl shadow-2xl"
+            />
+            <img
+              src={homeImage}
+              alt="City ride"
+              className="absolute -bottom-6 -right-4 z-20 w-40 rounded-2xl shadow-xl ring-4 ring-white sm:w-52"
+            />
+          </div>
+        </motion.div>
       </div>
-    </>
+    </div>
   );
 };
 

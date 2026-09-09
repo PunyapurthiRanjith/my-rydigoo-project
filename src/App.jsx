@@ -1,11 +1,11 @@
-import "./App.css";
+import ToastProvider from "./components/ToastProvider";
 import NavigationStackComponent from "./navigation-stack/navigationStack";
 
 function App() {
   return (
-    <>
-      <NavigationStackComponent></NavigationStackComponent>
-    </>
+    <ToastProvider>
+      <NavigationStackComponent />
+    </ToastProvider>
   );
 }
 

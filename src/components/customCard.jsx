@@ -1,26 +1,30 @@
-const CustomCardComponent = ({ image, cardTitle, text }) => {
+import { formatCurrency } from "../utils/fareCalculator";
+
+const CustomCardComponent = ({ image, cardTitle, text, baseFare, perKm }) => {
   return (
-    <>
-      <div className="max-w-sm rounded overflow-hidden shadow-lg">
-        <div
-          aria-hidden="true"
-          className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80"
-        >
-          <div
-            style={{
-              clipPath:
-                "polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)",
-            }}
-            className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]"
-          />
-        </div>
-        <img className="w-full" src={image} alt="Card image" />
-        <div className="px-6 py-4">
-          <h5 className="font-bold text-xl mb-2">{cardTitle}</h5>
-          <p className="text-gray-700 text-base">{text}</p>
-        </div>
+    <div className="group max-w-sm overflow-hidden rounded-2xl bg-white shadow-card ring-1 ring-gray-100 transition hover:-translate-y-1 hover:shadow-xl">
+      <div className="overflow-hidden">
+        <img
+          className="h-48 w-full object-cover transition duration-300 group-hover:scale-105"
+          src={image}
+          alt={cardTitle}
+        />
       </div>
-    </>
+      <div className="p-6">
+        <h5 className="text-xl font-bold text-gray-900">{cardTitle}</h5>
+        <p className="mt-2 text-sm leading-relaxed text-gray-600">{text}</p>
+        {baseFare && (
+          <div className="mt-4 flex items-center justify-between rounded-xl bg-teal-50 px-4 py-2">
+            <span className="text-xs font-medium uppercase tracking-wide text-teal-700">
+              Starting at
+            </span>
+            <span className="font-bold text-teal-800">
+              {formatCurrency(baseFare)} + {formatCurrency(perKm)}/km
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 

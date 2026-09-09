@@ -1,6 +1,10 @@
 import axios from "axios";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { API_ENDPOINTS } from "../config/api";
+import AuthLayout from "../components/AuthLayout";
+import FormInput from "../components/FormInput";
+import { useToast } from "../hooks/useToast";
 
 const RegisterScreenComponent = () => {
   const [username, setUsername] = useState("");
@@ -14,45 +18,11 @@ const RegisterScreenComponent = () => {
   const [mobileSpan, setMobileSpan] = useState("");
   const [passwordSpan, setPasswordSpan] = useState("");
   const [checkboxSpan, setCheckboxSpan] = useState("");
+  const [submitError, setSubmitError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const spanColor = {
-    color: "red",
-  };
-
-  const usernameHandler = (event) => {
-    const usernameEntered = event.target.value;
-    setUsername(usernameEntered);
-    const finalUserError = usernameValidation(usernameEntered);
-    setUserSpan(finalUserError);
-  };
-
-  const emailHandler = (event) => {
-    const emailEntered = event.target.value;
-    setEmail(emailEntered);
-    const finalEmailError = emailValidation(emailEntered);
-    setEMailSpan(finalEmailError);
-  };
-
-  const mobileHandler = (event) => {
-    const mobileEntered = event.target.value;
-    setMobile(mobileEntered);
-    const finalMobileError = mobileValidation(mobileEntered);
-    setMobileSpan(finalMobileError);
-  };
-
-  const passwordHandler = (event) => {
-    const passwordEntered = event.target.value;
-    setPassword(passwordEntered);
-    const finalPasswordError = passwordValidation(passwordEntered);
-    setPasswordSpan(finalPasswordError);
-  };
-
-  const checkboxHandler = (event) => {
-    const isChecked = event.target.checked;
-    setCheckbox(isChecked);
-    const finalCheckboxError = checkboxValidation(isChecked);
-    setCheckboxSpan(finalCheckboxError);
-  };
+  const navigate = useNavigate();
+  const toast = useToast();
 
   const usernameValidation = (userErrorChecker) => {
     let finalUserError = "";
@@ -102,8 +72,7 @@ const RegisterScreenComponent = () => {
     if (passwordErrorChecker === "") {
       finalPasswordError = "Please set your password";
     } else if (!hasSpecialChar) {
-      finalPasswordError =
-        "Password must contain at least one special character";
+      finalPasswordError = "Password must contain at least one special character";
     } else if (!hasNumber) {
       finalPasswordError = "Password must contain at least one numeric value";
     }
@@ -111,210 +80,140 @@ const RegisterScreenComponent = () => {
   };
 
   const checkboxValidation = (isChecked) => {
-    let finalCheckboxError = "";
     if (!isChecked) {
-      finalCheckboxError = "You must agree to the terms and conditions";
+      return "You must agree to the terms and conditions";
     }
-    return finalCheckboxError;
+    return "";
   };
 
   const submitHandler = async (event) => {
     event.preventDefault();
+    setSubmitError("");
 
-    if (!username || !mobile || !email || !password || checkbox === false) {
-      alert("Please fill out all the fields");
+    const userErr = usernameValidation(username);
+    const emailErr = emailValidation(email);
+    const mobileErr = mobileValidation(mobile);
+    const passwordErr = passwordValidation(password);
+    const checkboxErr = checkboxValidation(checkbox);
+
+    setUserSpan(userErr);
+    setEMailSpan(emailErr);
+    setMobileSpan(mobileErr);
+    setPasswordSpan(passwordErr);
+    setCheckboxSpan(checkboxErr);
+
+    if (userErr || emailErr || mobileErr || passwordErr || checkboxErr) {
       return;
     }
 
-    if (userSpan || emailSpan || mobileSpan || passwordSpan || checkboxSpan) {
-      alert("Please enter the correct credentials");
-      return;
-    }
-
-    const formDataToSubmit = {
-      username,
-      mobile,
-      email,
-      password,
-    };
-
+    setIsSubmitting(true);
     try {
-      const response = await axios.post(
-        "http://localhost:3000/formDetails",
-        formDataToSubmit,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
+      await axios.post(
+        API_ENDPOINTS.formDetails,
+        { username, mobile, email, password },
+        { headers: { "Content-Type": "application/json" } }
       );
 
-      if (response.status !== 200) {
-        throw new Error("Failed to submit form data");
-      }
-      setFormData((prevData) => [...prevData, formDataToSubmit]);
-      setUsername("");
-      setEmail("");
-      setMobile("");
-      setPassword("");
-      setCheckbox(false);
+      navigate("/login-page", {
+        state: { message: "Registration successful! Please log in." },
+      });
     } catch (error) {
-      console.error(error.message);
+      console.error(error);
+      const message =
+        "Registration failed. Make sure the API server is running (`npm start`).";
+      setSubmitError(message);
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
+  const errorClass = "mt-1 text-xs text-red-500";
+
   return (
-    <>
-      <div className="flex min-h-full flex-1 flex-col justify-center border">
-        <div className="sm:mx-auto sm:w-full  sm:max-w-sm">
-          <img
-            alt="Your Company"
-            src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=600"
-            className="mx-auto h-10 w-auto"
+    <AuthLayout title="Join Rydigoo" subtitle="Create an account and start riding">
+      <form onSubmit={submitHandler} className="space-y-4">
+        <FormInput
+          id="username"
+          label="Username"
+          icon="👤"
+          value={username}
+          onChange={(event) => {
+            setUsername(event.target.value);
+            setUserSpan(usernameValidation(event.target.value));
+          }}
+          error={userSpan}
+        />
+        <FormInput
+          id="email"
+          label="Email"
+          type="email"
+          icon="✉️"
+          value={email}
+          onChange={(event) => {
+            setEmail(event.target.value);
+            setEMailSpan(emailValidation(event.target.value));
+          }}
+          error={emailSpan}
+        />
+        <FormInput
+          id="mobile"
+          label="Mobile"
+          type="tel"
+          icon="📱"
+          value={mobile}
+          onChange={(event) => {
+            setMobile(event.target.value);
+            setMobileSpan(mobileValidation(event.target.value));
+          }}
+          error={mobileSpan}
+        />
+        <FormInput
+          id="password"
+          label="Password"
+          type="password"
+          icon="🔒"
+          value={password}
+          onChange={(event) => {
+            setPassword(event.target.value);
+            setPasswordSpan(passwordValidation(event.target.value));
+          }}
+          error={passwordSpan}
+        />
+
+        <div className="flex items-start gap-2">
+          <input
+            id="terms"
+            type="checkbox"
+            checked={checkbox}
+            onChange={(event) => {
+              setCheckbox(event.target.checked);
+              setCheckboxSpan(checkboxValidation(event.target.checked));
+            }}
+            className="mt-1 h-4 w-4 rounded border-gray-300 text-teal-600"
           />
-          <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
-            Register Here!
-          </h2>
+          <label htmlFor="terms" className="text-sm text-gray-600">
+            I agree to the Terms &amp; Conditions
+          </label>
         </div>
+        {checkboxSpan && <p className={errorClass}>{checkboxSpan}</p>}
 
-        <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-          <form onSubmit={submitHandler} className="space-y-6">
-            {/* Username Field */}
-            <div>
-              <label
-                htmlFor="username"
-                className="block text-sm font-medium leading-6 text-gray-900"
-              >
-                Username
-              </label>
-              <div className="mt-2">
-                <input
-                  id="username"
-                  name="username"
-                  type="text"
-                  value={username}
-                  onChange={usernameHandler}
-                  autoComplete="username"
-                  className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
-              </div>
-              <div>
-                <span style={spanColor}>{userSpan}</span>
-              </div>
-            </div>
+        {submitError && (
+          <div className="rounded-xl bg-red-50 p-3 text-sm text-red-600">{submitError}</div>
+        )}
 
-            {/* Email Field */}
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium leading-6 text-gray-900"
-              >
-                Email address
-              </label>
-              <div className="mt-2">
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={email}
-                  onChange={emailHandler}
-                  autoComplete="email"
-                  className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
-              </div>
-              <div>
-                <span style={spanColor}>{emailSpan}</span>
-              </div>
-            </div>
+        <button type="submit" disabled={isSubmitting} className="btn-primary w-full">
+          {isSubmitting ? "Creating account..." : "Register"}
+        </button>
+      </form>
 
-            {/* Mobile Field */}
-            <div>
-              <label
-                htmlFor="mobile"
-                className="block text-sm font-medium leading-6 text-gray-900"
-              >
-                Mobile
-              </label>
-              <div className="mt-2">
-                <input
-                  id="mobile"
-                  name="mobile"
-                  type="tel"
-                  value={mobile}
-                  onChange={mobileHandler}
-                  autoComplete="mobile"
-                  className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
-              </div>
-              <div>
-                <span style={spanColor}>{mobileSpan}</span>
-              </div>
-            </div>
-
-            {/* Password Field */}
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium leading-6 text-gray-900"
-              >
-                Set-Password
-              </label>
-              <div className="mt-2">
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  value={password}
-                  onChange={passwordHandler}
-                  className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
-              </div>
-              <div>
-                <span style={spanColor}>{passwordSpan}</span>
-              </div>
-            </div>
-
-            {/* Checkbox */}
-            <div className="flex items-center mb-4">
-              <input
-                id="default-checkbox"
-                type="checkbox"
-                checked={checkbox}
-                onChange={checkboxHandler}
-                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-              />
-              <label
-                htmlFor="default-checkbox"
-                className="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
-              >
-                Agree Terms & Conditions
-              </label>
-            </div>
-            <span style={spanColor}>{checkboxSpan}</span>
-
-            {/* Submit Button */}
-            <div>
-              <button
-                type="submit"
-                className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-              >
-                Sign in
-              </button>
-            </div>
-          </form>
-
-          <p className="mt-10 text-center text-sm text-gray-500">
-            already have an account?{" "}
-            <button
-              to="/login"
-              className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500"
-            >
-              Login here
-            </button>
-          </p>
-        </div>
-      </div>
-    </>
+      <p className="mt-8 text-center text-sm text-gray-500">
+        Already have an account?{" "}
+        <Link to="/login-page" className="font-semibold text-teal-600 hover:text-teal-500">
+          Login here
+        </Link>
+      </p>
+    </AuthLayout>
   );
 };
 
