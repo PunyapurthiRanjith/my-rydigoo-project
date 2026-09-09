@@ -1,7 +1,3 @@
-"use client";
-
-
-
 import SubscribeComponent from "../components/subscribeCompo";
 import OurTeamComponent from "../components/ourTeamCompo";
 import HomeIntroComponent from "../components/homeIntroCompo";
@@ -12,10 +8,10 @@ const HomeScreenComponent = () => {
   
   return (
     <>
-      <HomeIntroComponent></HomeIntroComponent>
-      <ServicesComponent></ServicesComponent>
-      <MiddleComponent></MiddleComponent>
-      <OurTeamComponent></OurTeamComponent>
+      <HomeIntroComponent />
+      <div id="services"><ServicesComponent /></div>
+      <div id="features"><MiddleComponent /></div>
+      <div id="team"><OurTeamComponent /></div>
       <SubscribeComponent></SubscribeComponent>
     </>
   );

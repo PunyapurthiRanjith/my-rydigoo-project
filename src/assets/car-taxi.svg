@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 240" fill="none">
+  <rect width="400" height="240" fill="#eef2ff"/>
+  <rect x="60" y="100" width="280" height="80" rx="16" fill="url(#taxiGrad)"/>
+  <rect x="100" y="70" width="140" height="50" rx="12" fill="#fff"/>
+  <circle cx="120" cy="180" r="28" fill="#312e81"/>
+  <circle cx="120" cy="180" r="14" fill="#a5b4fc"/>
+  <circle cx="280" cy="180" r="28" fill="#312e81"/>
+  <circle cx="280" cy="180" r="14" fill="#a5b4fc"/>
+  <rect x="170" y="82" width="60" height="8" rx="4" fill="#fde68a"/>
+  <defs>
+    <linearGradient id="taxiGrad" x1="60" y1="100" x2="340" y2="180" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6366f1"/>
+      <stop offset="1" stop-color="#8b5cf6"/>
+    </linearGradient>
+  </defs>
+</svg>

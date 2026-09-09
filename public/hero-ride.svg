@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" fill="none">
+  <rect width="800" height="600" fill="#f0fdfa"/>
+  <circle cx="650" cy="120" r="80" fill="#99f6e4" opacity="0.5"/>
+  <circle cx="120" cy="480" r="100" fill="#c7d2fe" opacity="0.5"/>
+  <path d="M120 420 Q400 300 680 420" stroke="#0d9488" stroke-width="4" stroke-dasharray="12 8" opacity="0.4"/>
+  <rect x="180" y="320" width="440" height="120" rx="24" fill="url(#carGrad)"/>
+  <rect x="220" y="280" width="200" height="60" rx="16" fill="#fff" opacity="0.9"/>
+  <circle cx="260" cy="440" r="36" fill="#134e4a"/>
+  <circle cx="260" cy="440" r="18" fill="#5eead4"/>
+  <circle cx="540" cy="440" r="36" fill="#134e4a"/>
+  <circle cx="540" cy="440" r="18" fill="#5eead4"/>
+  <path d="M300 200 L340 280 L460 280 L500 200 Z" fill="#6366f1" opacity="0.8"/>
+  <text x="400" y="180" text-anchor="middle" font-family="Arial,sans-serif" font-size="28" font-weight="bold" fill="#0f766e">Rydigoo</text>
+  <text x="400" y="520" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" fill="#64748b">Ride smart. Pay fair.</text>
+  <defs>
+    <linearGradient id="carGrad" x1="180" y1="320" x2="620" y2="440" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#14b8a6"/>
+      <stop offset="1" stop-color="#6366f1"/>
+    </linearGradient>
+  </defs>
+</svg>

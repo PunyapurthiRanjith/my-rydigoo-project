@@ -1,138 +1,216 @@
-import { Autocomplete, useJsApiLoader } from "@react-google-maps/api";
-import appInterfaceImage from "../assets/app-interface-image.png";
-import { useNavigate } from "react-router-dom";
-import { useRef, useState } from "react";
-const LIBRARIES = ["places"];
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import AppHeader from "../components/AppHeader";
+import BookRideHeroStack from "../components/BookRideHeroStack";
+import LocationFieldsGroup from "../components/LocationFieldsGroup";
+import VehicleSelector from "../components/VehicleSelector";
+import { AnimatedItem, AnimatedPage } from "../components/AnimatedPage";
+import { geocodeAddress, getCurrentLocationPlace } from "../services/geocoding";
+import { useToast } from "../hooks/useToast";
+import { getRideDraft, saveRideDraft } from "../utils/rideDraft";
+import {
+  hasBlockingLocationErrors,
+  validateLocationFields,
+} from "../utils/locationValidation";
+
+const emptyPlace = () => ({ label: "", lat: null, lng: null });
 
 const AppInterfaceComponent = () => {
-  const fromRef = useRef();
-  const destinationRef = useRef();
-  const [formErrors, setFormErrors] = useState({});
-  const [address, setAddress] = useState({
-    fromAddress: "",
-    destinationAddress: "",
-  });
-
+  const location = useLocation();
   const navigate = useNavigate();
+  const toast = useToast();
+  const incomingDraft = location.state?.draft || getRideDraft();
 
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: "AIzaSyBqHp7o26HqfYZuuUnuGheylzUaNQZvRzQ",
-    libraries:LIBRARIES,
-  });
-  if (!isLoaded) {
-    return <div>Loading...</div>;
-  }
+  const [fromPlace, setFromPlace] = useState(incomingDraft?.fromPlace || emptyPlace());
+  const [toPlace, setToPlace] = useState(incomingDraft?.toPlace || emptyPlace());
+  const [vehicleType, setVehicleType] = useState(incomingDraft?.vehicleType || "auto");
+  const [touched, setTouched] = useState({ from: false, to: false, submitted: false });
+  const [routeError, setRouteError] = useState("");
+  const [gpsError, setGpsError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLocatingFrom, setIsLocatingFrom] = useState(false);
 
-  const confirmRide = async (e) => {
-    e.preventDefault();
+  const formErrors = useMemo(
+    () =>
+      validateLocationFields(fromPlace, toPlace, {
+        fromTouched: touched.from,
+        toTouched: touched.to,
+        submitted: touched.submitted,
+      }),
+    [fromPlace, toPlace, touched]
+  );
 
-    const fromEntered = fromRef.current.value;
-    const destinationEntered = destinationRef.current.value;
+  useEffect(() => {
+    if (fromPlace.label || toPlace.label) {
+      saveRideDraft({ fromPlace, toPlace, vehicleType });
+    }
+  }, [fromPlace, toPlace, vehicleType]);
 
-    const validatedErrors = validations(fromEntered, destinationEntered);
-    
-    if (Object.keys(validatedErrors).length > 0) {
-      setFormErrors(validatedErrors);
-    } else {
-      const newAddress = { fromAddress: fromEntered, destinationAddress: destinationEntered };
-      setAddress(newAddress);
-      navigate("/locationRoute-page", { state: { address: newAddress } });
+  const handleFromChange = (label) => {
+    setFromPlace({ label, lat: null, lng: null });
+    setRouteError("");
+    setGpsError("");
+    setTouched((prev) => ({ ...prev, from: true }));
+  };
+
+  const handleToChange = (label) => {
+    setToPlace({ label, lat: null, lng: null });
+    setRouteError("");
+    setTouched((prev) => ({ ...prev, to: true }));
+  };
+
+  const handleFromSelect = (place) => {
+    setFromPlace({ label: place.label, lat: place.lat, lng: place.lng });
+    setRouteError("");
+    setGpsError("");
+    setTouched((prev) => ({ ...prev, from: true }));
+  };
+
+  const handleToSelect = (place) => {
+    setToPlace({ label: place.label, lat: place.lat, lng: place.lng });
+    setRouteError("");
+    setTouched((prev) => ({ ...prev, to: true }));
+  };
+
+  const handleMyLocationForFrom = async () => {
+    setIsLocatingFrom(true);
+    setRouteError("");
+    setGpsError("");
+    setTouched((prev) => ({ ...prev, from: true }));
+    try {
+      const place = await getCurrentLocationPlace();
+      setFromPlace({ label: place.label, lat: place.lat, lng: place.lng });
+      toast.success("Pickup set to your current location.");
+    } catch (error) {
+      const message = error.message || "Could not get your location.";
+      setGpsError(message);
+      toast.error(message);
+    } finally {
+      setIsLocatingFrom(false);
     }
   };
 
-  const validations = (from, destination) => {
-    let errors = {};
-    if (!from) {
-      errors.fromError = "Please enter your location";
+  const handleSwapLocations = () => {
+    setFromPlace(toPlace);
+    setToPlace(fromPlace);
+    setRouteError("");
+    setGpsError("");
+    setTouched({ from: true, to: true, submitted: false });
+  };
+
+  const confirmRide = async (event) => {
+    event.preventDefault();
+    setTouched({ from: true, to: true, submitted: true });
+    setRouteError("");
+
+    const errors = validateLocationFields(fromPlace, toPlace, {
+      fromTouched: true,
+      toTouched: true,
+      submitted: true,
+    });
+
+    if (hasBlockingLocationErrors(errors)) {
+      return;
     }
-    if (!destination) {
-      errors.destinationError = "Please enter your destination";
+
+    setIsSubmitting(true);
+
+    try {
+      let from = fromPlace;
+      let to = toPlace;
+
+      if (!from.lat || !from.lng) {
+        from = await geocodeAddress(from.label);
+      }
+      if (!to.lat || !to.lng) {
+        to = await geocodeAddress(to.label);
+      }
+
+      const draft = {
+        fromPlace: { label: from.label, lat: from.lat, lng: from.lng },
+        toPlace: { label: to.label, lat: to.lat, lng: to.lng },
+        vehicleType,
+      };
+      saveRideDraft(draft);
+
+      navigate("/locationRoute-page", {
+        state: {
+          address: {
+            fromAddress: from.label,
+            destinationAddress: to.label,
+            fromCoords: { lat: from.lat, lng: from.lng },
+            toCoords: { lat: to.lat, lng: to.lng },
+            vehicleType,
+          },
+        },
+      });
+    } catch (error) {
+      const message = error.message || "Could not resolve one of the addresses.";
+      setRouteError(message);
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
     }
-    return errors;
   };
 
   return (
-    <>
-      <div className="flex flex-col lg:flex-row items-center lg:justify-evenly lg:px-20 space-y-8 lg:space-y-0 lg:space-x-10 border">
-        <div className="w-full lg:w-1/2 max-w-md mx-auto lg:mx-0">
-          <img
-            alt="Your Company"
-            src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=600"
-            className="mx-auto h-10 w-auto"
-          />
-          <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
-            Let's start a Ride...
-          </h2>
+    <div className="min-h-screen bg-gradient-to-b from-teal-50/50 to-white">
+      <AppHeader />
+      <AnimatedPage className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-6xl grid-cols-1 items-stretch gap-8 px-6 py-8 lg:grid-cols-2 lg:gap-10 lg:px-8 lg:py-10">
+        <AnimatedItem className="glass-card overflow-visible p-8 lg:flex lg:flex-col lg:justify-center">
+          <h2 className="text-2xl font-bold text-gray-900">Book Your Ride</h2>
+          <p className="mt-2 text-sm text-gray-500">
+            Pick locations from suggestions, swap if needed, then view route and fare.
+          </p>
 
-          <div className="mt-10">
-            <form onSubmit={confirmRide} className="space-y-6">
-              <div>
-                <label
-                  htmlFor="from"
-                  className="block text-sm font-medium leading-6 text-gray-900"
-                >
-                  FROM:
-                </label>
-                <div className="mt-2">
-                  <Autocomplete onPlaceChanged={() => {}}>
-                    <input
-                      placeholder="Start from"
-                      id="from"
-                      name="from"
-                      type="text"
-                      ref={fromRef}
-                      className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                    />
-                  </Autocomplete>
-                  {formErrors.fromError && <span className="text-red-500">{formErrors.fromAdd}</span>}
-                </div>
+          <form onSubmit={confirmRide} className="relative mt-8 space-y-8 overflow-visible" noValidate>
+            <AnimatedItem delay={0.1}>
+              <label className="mb-3 block text-sm font-semibold text-gray-900">
+                Select ride type
+              </label>
+              <VehicleSelector selected={vehicleType} onSelect={setVehicleType} />
+            </AnimatedItem>
+
+            <LocationFieldsGroup
+              fromPlace={fromPlace}
+              toPlace={toPlace}
+              onFromChange={handleFromChange}
+              onToChange={handleToChange}
+              onFromSelect={handleFromSelect}
+              onToSelect={handleToSelect}
+              onFromBlur={() => setTouched((prev) => ({ ...prev, from: true }))}
+              onToBlur={() => setTouched((prev) => ({ ...prev, to: true }))}
+              onSwap={handleSwapLocations}
+              fromError={isLocatingFrom ? "" : gpsError || formErrors.fromError}
+              toError={formErrors.destinationError}
+              showMyLocation
+              onMyLocation={handleMyLocationForFrom}
+              isLocatingFrom={isLocatingFrom}
+            />
+
+            {routeError && (
+              <div className="animate-fade-in rounded-xl bg-red-50 p-3 text-sm text-red-600">
+                {routeError}
               </div>
+            )}
 
-              <div>
-                <div className="flex items-center justify-between">
-                  <label
-                    htmlFor="destination"
-                    className="block text-sm font-medium leading-6 text-gray-900"
-                  >
-                    TO:
-                  </label>
-                </div>
-                <div className="mt-2">
-                  <Autocomplete onPlaceChanged={() => {}}>
-                    <input
-                      id="destination"
-                      name="destination"
-                      type="text"
-                      placeholder="Choose destination"
-                      ref={destinationRef}
-                      className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                    />
-                  </Autocomplete>
-                  {formErrors.destinationError && <span className="text-red-500">{formErrors.destinationAdd}</span>}
-                </div>
-              </div>
+            <AnimatedItem delay={0.25}>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="btn-primary w-full disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSubmitting ? "Finding locations..." : "See Route & Fare"}
+              </button>
+            </AnimatedItem>
+          </form>
+        </AnimatedItem>
 
-              <div>
-                <button
-                  type="submit"
-                  className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                >
-                  Confirm Location
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-
-        <div className="w-full lg:w-1/2 max-w-lg mx-auto lg:mx-0 lg:max-w-md xl:max-w-lg border">
-          <img
-            src={appInterfaceImage}
-            alt="App Interface"
-            className="w-full rounded-lg shadow-lg"
-          />
-        </div>
-      </div>
-    </>
+        <AnimatedItem delay={0.15} className="relative min-h-[360px] w-full lg:min-h-0 lg:h-full">
+          <BookRideHeroStack />
+        </AnimatedItem>
+      </AnimatedPage>
+    </div>
   );
 };
 

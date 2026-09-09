@@ -1,50 +1,71 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { API_ENDPOINTS } from "../config/api";
+import { setLoggedInUser } from "../utils/auth";
+import AuthLayout from "../components/AuthLayout";
+import FormInput from "../components/FormInput";
+import { useToast } from "../hooks/useToast";
 
 const LoginScreenComponent = () => {
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [formData, setFormData] = useState([]);
-  const [errorMessage, setErrorMessage] = useState(""); // State to handle error message
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
-  const navigate = useNavigate(); // Initialize useNavigate
-
-  const usernameHandler = (event) => {
-    const usernameEntered = event.target.value;
-    setLoginUsername(usernameEntered);
-  };
-
-  const passwordHandler = (event) => {
-    const passwordEntered = event.target.value;
-    setLoginPassword(passwordEntered);
-  };
+  const navigate = useNavigate();
+  const location = useLocation();
+  const toast = useToast();
+  const successMessage = location.state?.message;
 
   const fetchDetails = async () => {
+    setIsLoading(true);
     try {
-      const { data, status } = await axios.get(
-        "http://localhost:3000/formDetails"
-      );
+      const { data, status } = await axios.get(API_ENDPOINTS.formDetails);
       if (status === 200) {
         setFormData(data);
+        setErrorMessage("");
       }
     } catch (error) {
-      console.log("Not fetching form details", error);
+      console.error("Not fetching form details", error);
+      const message =
+        "Cannot connect to server. Run `npm start` to launch the app and API together.";
+      setErrorMessage(message);
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const submitHandler = (event) => {
     event.preventDefault();
+    setErrorMessage("");
+
+    if (formData.length === 0) {
+      setErrorMessage(
+        "User data not loaded. Make sure the API server is running on port 3000."
+      );
+      return;
+    }
 
     const user = formData.find(
-      (user) =>
-        user.username === loginUsername && user.password === loginPassword
+      (entry) =>
+        entry.username === loginUsername && entry.password === loginPassword
     );
 
     if (user) {
+      setLoggedInUser({
+        username: user.username,
+        email: user.email,
+        mobile: user.mobile,
+      });
+      toast.success(`Welcome back, ${user.username}!`);
       navigate("/app-interface");
     } else {
-      setErrorMessage("Incorrect credentials, please try again.");
+      const message = "Incorrect username or password. Please try again.";
+      setErrorMessage(message);
+      toast.error(message);
     }
   };
 
@@ -52,90 +73,58 @@ const LoginScreenComponent = () => {
     fetchDetails();
   }, []);
 
+  useEffect(() => {
+    if (successMessage) {
+      toast.success(successMessage);
+    }
+  }, [successMessage, toast]);
+
   return (
-    <>
-      <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
-        <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-          <img
-            alt="Your Company"
-            src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=600"
-            className="mx-auto h-10 w-auto"
+    <AuthLayout title="Welcome back" subtitle="Sign in to book your next ride">
+      {successMessage && (
+        <div className="mb-4 rounded-xl bg-green-50 p-3 text-sm text-green-700 ring-1 ring-green-100">
+          {successMessage}
+        </div>
+      )}
+      {isLoading ? (
+        <p className="text-center text-sm text-gray-500">Loading users...</p>
+      ) : (
+        <form onSubmit={submitHandler} className="space-y-5">
+          <FormInput
+            id="loginUsername"
+            label="Username"
+            icon="👤"
+            required
+            value={loginUsername}
+            onChange={(event) => setLoginUsername(event.target.value)}
           />
-          <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
-            Login
-          </h2>
-        </div>
+          <FormInput
+            id="loginPassword"
+            label="Password"
+            type="password"
+            icon="🔒"
+            required
+            value={loginPassword}
+            onChange={(event) => setLoginPassword(event.target.value)}
+          />
 
-        <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-          <form onSubmit={submitHandler} className="space-y-6">
-            <div>
-              <label
-                htmlFor="loginUsername"
-                className="block text-sm font-medium leading-6 text-gray-900"
-              >
-                Username
-              </label>
-              <div className="mt-2">
-                <input
-                  id="loginUsername"
-                  name="loginUsername"
-                  type="text"
-                  required
-                  value={loginUsername}
-                  onChange={usernameHandler}
-                  className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
-              </div>
-            </div>
+          {errorMessage && (
+            <div className="rounded-xl bg-red-50 p-3 text-sm text-red-600">{errorMessage}</div>
+          )}
 
-            <div>
-              <div className="flex items-center justify-between">
-                <label
-                  htmlFor="loginPassword"
-                  className="block text-sm font-medium leading-6 text-gray-900"
-                >
-                  Password
-                </label>
-              </div>
-              <div className="mt-2">
-                <input
-                  id="loginPassword"
-                  name="loginPassword"
-                  type="password"
-                  required
-                  value={loginPassword}
-                  onChange={passwordHandler}
-                  className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
-              </div>
-            </div>
+          <button type="submit" className="btn-primary w-full">
+            Sign in
+          </button>
+        </form>
+      )}
 
-            {errorMessage && (
-              <div className="text-red-500 text-sm mt-2">{errorMessage}</div>
-            )}
-
-            <div>
-              <button
-                type="submit"
-                className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-              >
-                Sign in
-              </button>
-            </div>
-          </form>
-
-          <p className="mt-10 text-center text-sm text-gray-500">
-            Don't have an account?{" "}
-            <a
-              href="#"
-              className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500"
-            >
-              Register here
-            </a>
-          </p>
-        </div>
-      </div>
-    </>
+      <p className="mt-8 text-center text-sm text-gray-500">
+        Don&apos;t have an account?{" "}
+        <Link to="/register-page" className="font-semibold text-teal-600 hover:text-teal-500">
+          Register here
+        </Link>
+      </p>
+    </AuthLayout>
   );
 };
 
