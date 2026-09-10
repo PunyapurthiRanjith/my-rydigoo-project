@@ -160,7 +160,10 @@ const AppInterfaceComponent = () => {
         <AnimatedItem className="glass-card overflow-visible p-8 lg:flex lg:flex-col lg:justify-center">
           <h2 className="text-2xl font-bold text-gray-900">Book Your Ride</h2>
           <p className="mt-2 text-sm text-gray-500">
-            Pick locations from suggestions, swap if needed, then view route and fare.
+            Pick locations in India from suggestions, swap if needed, then view route and fare.
+          </p>
+          <p className="mt-1 text-xs font-medium text-teal-700">
+            Service area: India only
           </p>
 
           <form onSubmit={confirmRide} className="relative mt-8 space-y-8 overflow-visible" noValidate>

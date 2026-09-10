@@ -1,4 +1,5 @@
 import { OPENROUTESERVICE_API_KEY, OSRM_API_URL } from "../config/maps";
+import { assertCoordInIndia } from "../utils/indiaBounds";
 
 const formatDuration = (seconds) => {
   const minutes = Math.round(seconds / 60);
@@ -76,6 +77,7 @@ const validateCoords = (point, label) => {
   if (!point?.lat || !point?.lng || Number.isNaN(Number(point.lat)) || Number.isNaN(Number(point.lng))) {
     throw new Error(`Invalid coordinates for ${label}. Please re-select the address.`);
   }
+  assertCoordInIndia(point.lat, point.lng, label === "pickup" ? "Pickup" : "Drop");
 };
 
 export const getRoute = async (from, to) => {

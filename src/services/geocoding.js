@@ -1,4 +1,11 @@
 import { PHOTON_API_URL, PHOTON_REVERSE_URL } from "../config/maps";
+import {
+  assertCoordInIndia,
+  INDIA_ONLY_MESSAGE,
+  INDIA_PHOTON_BBOX,
+  isCoordInIndia,
+  isPhotonFeatureInIndia,
+} from "../utils/indiaBounds";
 
 const formatPhotonFeature = (feature) => {
   const props = feature.properties;
@@ -11,13 +18,19 @@ const formatPhotonFeature = (feature) => {
 const formatCoordinateLabel = (lat, lng) =>
   `My Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
 
+const mapFeatureToPlace = (feature) => ({
+  label: formatPhotonFeature(feature),
+  lat: feature.geometry.coordinates[1],
+  lng: feature.geometry.coordinates[0],
+});
+
 export const searchPlaces = async (query) => {
   if (!query || query.trim().length < 2) {
     return [];
   }
 
   const response = await fetch(
-    `${PHOTON_API_URL}/?q=${encodeURIComponent(query.trim())}&limit=6&lang=en`
+    `${PHOTON_API_URL}/?q=${encodeURIComponent(query.trim())}&limit=10&bbox=${INDIA_PHOTON_BBOX}&lang=en`
   );
 
   if (!response.ok) {
@@ -26,14 +39,15 @@ export const searchPlaces = async (query) => {
 
   const data = await response.json();
 
-  return data.features.map((feature) => ({
-    label: formatPhotonFeature(feature),
-    lat: feature.geometry.coordinates[1],
-    lng: feature.geometry.coordinates[0],
-  }));
+  return data.features
+    .filter(isPhotonFeatureInIndia)
+    .map(mapFeatureToPlace)
+    .slice(0, 6);
 };
 
 export const reverseGeocode = async (lat, lng) => {
+  assertCoordInIndia(lat, lng, "Your location");
+
   try {
     const response = await fetch(
       `${PHOTON_REVERSE_URL}?lon=${lng}&lat=${lat}&lang=en`
@@ -44,7 +58,7 @@ export const reverseGeocode = async (lat, lng) => {
     }
 
     const data = await response.json();
-    const feature = data.features?.[0];
+    const feature = data.features?.find(isPhotonFeatureInIndia);
 
     if (!feature) {
       return { label: formatCoordinateLabel(lat, lng), lat, lng };
@@ -55,7 +69,10 @@ export const reverseGeocode = async (lat, lng) => {
       lat,
       lng,
     };
-  } catch {
+  } catch (error) {
+    if (error.message.includes("outside India")) {
+      throw error;
+    }
     return { label: formatCoordinateLabel(lat, lng), lat, lng };
   }
 };
@@ -69,10 +86,24 @@ export const getCurrentLocationPlace = () =>
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        const place = await reverseGeocode(lat, lng);
-        resolve(place);
+        try {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+
+          if (!isCoordInIndia(lat, lng)) {
+            reject(
+              new Error(
+                `Your GPS location is outside India. ${INDIA_ONLY_MESSAGE}`
+              )
+            );
+            return;
+          }
+
+          const place = await reverseGeocode(lat, lng);
+          resolve(place);
+        } catch (error) {
+          reject(error);
+        }
       },
       () => reject(new Error("Could not access your location. Allow GPS permission."))
     );
@@ -81,7 +112,21 @@ export const getCurrentLocationPlace = () =>
 export const geocodeAddress = async (addressText) => {
   const results = await searchPlaces(addressText);
   if (results.length === 0) {
-    throw new Error(`Could not find location: ${addressText}`);
+    throw new Error(
+      `No matching location found in India for "${addressText}". ${INDIA_ONLY_MESSAGE}`
+    );
   }
   return results[0];
+};
+
+export const validatePlaceInIndia = (place, label = "Location") => {
+  if (!place?.lat || !place?.lng) {
+    return { valid: false, reason: `${label} coordinates are missing.` };
+  }
+
+  if (!isCoordInIndia(place.lat, place.lng)) {
+    return { valid: false, reason: `${label} must be within India.` };
+  }
+
+  return { valid: true };
 };

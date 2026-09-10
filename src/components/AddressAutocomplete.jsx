@@ -71,6 +71,9 @@ const AddressAutocomplete = ({
         }
         setSuggestions(results);
         setIsOpen(results.length > 0);
+        if (results.length === 0) {
+          setSearchError("No locations found in India. Try a city or area within India.");
+        }
       } catch (error) {
         if (requestId !== requestIdRef.current) {
           return;

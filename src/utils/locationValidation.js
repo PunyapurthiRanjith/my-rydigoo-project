@@ -1,3 +1,5 @@
+import { validatePlaceInIndia } from "../services/geocoding";
+
 export const validateLocationFields = (fromPlace, toPlace, { fromTouched, toTouched, submitted } = {}) => {
   const errors = {};
   const fromLabel = fromPlace.label.trim();
@@ -10,6 +12,11 @@ export const validateLocationFields = (fromPlace, toPlace, { fromTouched, toTouc
       errors.fromError = "Pickup location is required";
     } else if (!fromPlace.lat || !fromPlace.lng) {
       errors.fromError = "Select pickup from the suggestions list";
+    } else {
+      const indiaCheck = validatePlaceInIndia(fromPlace, "Pickup");
+      if (!indiaCheck.valid) {
+        errors.fromError = indiaCheck.reason;
+      }
     }
   }
 
@@ -18,6 +25,11 @@ export const validateLocationFields = (fromPlace, toPlace, { fromTouched, toTouc
       errors.destinationError = "Drop location is required";
     } else if (!toPlace.lat || !toPlace.lng) {
       errors.destinationError = "Select destination from the suggestions list";
+    } else {
+      const indiaCheck = validatePlaceInIndia(toPlace, "Drop");
+      if (!indiaCheck.valid) {
+        errors.destinationError = indiaCheck.reason;
+      }
     }
   }
 

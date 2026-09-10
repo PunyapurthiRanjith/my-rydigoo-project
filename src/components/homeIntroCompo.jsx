@@ -6,6 +6,7 @@ import { Dialog } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { Link } from "react-router-dom";
 import RydigooLogo from "./RydigooLogo";
+import { VEHICLE_TYPES } from "../utils/fareCalculator";
 
 const HomeIntroComponent = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -134,7 +135,7 @@ const HomeIntroComponent = () => {
                 <p className="text-xs text-gray-500">Ride types</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold text-indigo-700">₹40+</p>
+                <p className="text-2xl font-bold text-indigo-700">₹{VEHICLE_TYPES.bike.minimumFare}+</p>
                 <p className="text-xs text-gray-500">Starting fare</p>
               </div>
               <div className="text-center">
